@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Class {
+  id                  Int               @id @unique @default(autoincrement())
+  name                String            @unique
+  tier                Int
+  ascendancy          Class[]           @relation("ClassAdvancements")
+  parentId            Int?
+  parent              Class?            @relation("ClassAdvancements", fields: [parentId], references: [id])
+  allowedRestrictions ItemRestriction[] @relation("RestrictionClass")
+}
+
+model Item {
+  id            Int             @id @unique @default(autoincrement())
+  name          String          @unique
+  displayName   String
+  icon          String
+  legacyItem    Boolean         @default(false)
+  description   String?
+  effects       String?
+  recipe        ItemRecipes[]   @relation("recipe")
+  partOf        ItemRecipes[]   @relation("partOf")
+  rarity        ItemRarity      @relation(fields: [rarityId], references: [id])
+  rarityId      Int
+  restriction   ItemRestriction @relation(fields: [restrictionId], references: [id])
+  restrictionId Int
+  source        String?
+  sourceShort   String?
+}
+
+model ItemRecipes {
+  id       Int  @id @default(autoincrement())
+  outputId Int
+  inputId  Int
+  input   Item @relation("partOf", fields: [inputId], references: [id])
+  output   Item @relation("recipe", fields: [outputId], references: [id])
+  quantity Int  @default(1)
+
+  @@index([inputId, outputId])
+}
+
+model ItemRestriction {
+  id    Int     @id @default(autoincrement())
+  name  String
+  items Item[]
+  class Class[] @relation("RestrictionClass")
+}
+
+model ItemRarity {
+  id    Int    @id @unique
+  name  String
+  color String
+  items Item[]
+}
